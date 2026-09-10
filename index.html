@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f4f0e8">
+  <title>UBC CSS Photo Strip Booth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <main class="app-shell">
+    <header class="masthead">
+      <a class="wordmark" href="#" data-action="home"><span>UBC</span> CSS</a>
+      <div class="session-label">PHOTO STRIP BOOTH <span>/// 2026</span></div>
+    </header>
+
+    <section class="screen active" id="landing-screen" aria-labelledby="landing-title">
+      <div class="intro">
+        <p class="eyebrow">Capture a little campus energy</p>
+        <h1 id="landing-title">Three frames.<br><em>One good memory.</em></h1>
+        <p class="lede">Pick a strip, bring your best angle, and leave with a keepsake made right here in your browser.</p>
+      </div>
+      <div class="template-picker">
+        <div class="section-heading"><span>01 / Choose a frame</span><span class="mono">591 × 1772 px</span></div>
+        <div class="template-grid" id="template-grid"></div>
+      </div>
+      <button class="primary-button landing-cta" data-action="start" disabled>Choose a frame to begin <span>→</span></button>
+      <p class="privacy-note"><span class="lock-mark">✦</span> Photos stay on this device. Nothing is uploaded.</p>
+    </section>
+
+    <section class="screen" id="camera-screen" aria-labelledby="camera-title">
+      <div class="screen-topline"><button class="back-button" data-action="home">← Frames</button><span class="progress-label" id="progress-label">PHOTO 01 / 03</span></div>
+      <div class="camera-layout">
+        <div class="camera-copy">
+          <p class="eyebrow">Your turn</p>
+          <h2 id="camera-title">Find your<br><em>good side.</em></h2>
+          <p class="camera-tip">Center yourself in the window. We’ll fill the strip from top to bottom.</p>
+          <div class="capture-list" id="capture-list"></div>
+        </div>
+        <div class="camera-stage">
+          <div class="viewfinder" id="viewfinder">
+            <video id="camera-video" autoplay playsinline muted></video>
+            <div class="viewfinder-corners" aria-hidden="true"></div>
+            <div class="countdown" id="countdown" aria-live="assertive"></div>
+            <div class="flash" id="flash"></div>
+            <div class="camera-error" id="camera-error" hidden>
+              <strong>Camera access is off.</strong>
+              <span>You can still make your strip by uploading a photo for each slot.</span>
+              <button class="secondary-button" data-action="upload-current">Upload this photo</button>
+            </div>
+          </div>
+          <div class="camera-controls">
+            <label class="toggle-label"><input type="checkbox" id="mirror-toggle" checked><span class="toggle-ui"></span> Mirror final photos</label>
+            <button class="shutter-button" id="capture-button" data-action="capture" aria-label="Capture photo"><span></span></button>
+            <label class="upload-button">Upload<input type="file" id="upload-input" accept="image/*"></label>
+          </div>
+          <div class="capture-review" id="capture-review" hidden>
+            <img id="capture-preview" alt="Preview of the captured photo">
+            <div class="review-actions">
+              <button class="secondary-button" data-action="retake-current">Retake</button>
+              <button class="primary-button" data-action="continue-current">Keep photo <span>→</span></button>
+            </div>
+          </div>
+          <p class="camera-status" id="camera-status">Allow camera access to start</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="result-screen" aria-labelledby="result-title">
+      <div class="screen-topline"><button class="back-button" data-action="home">← New strip</button><span class="progress-label">READY TO SHARE</span></div>
+      <div class="result-layout">
+        <div class="result-copy">
+          <p class="eyebrow">Hot off the press</p>
+          <h2 id="result-title">That’s<br><em>a keeper.</em></h2>
+          <p class="lede">Your strip is rendered at full resolution, ready for the camera roll or the group chat.</p>
+          <div class="result-actions">
+            <button class="primary-button" data-action="download">Download PNG <span>↓</span></button>
+            <button class="secondary-button" data-action="share">Share strip <span>↗</span></button>
+            <button class="secondary-button" data-action="change-template">Change frame <span>↗</span></button>
+            <button class="text-button" data-action="retake">Retake all photos</button>
+          </div>
+          <p class="share-status" id="share-status" aria-live="polite"></p>
+        </div>
+        <div class="result-stage"><canvas id="result-canvas" width="591" height="1772"></canvas></div>
+      </div>
+    </section>
+
+    <footer class="footer"><span>UBC COMPUTER SCIENCE SOCIETY</span><span>MADE FOR THE MOMENT</span></footer>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>
