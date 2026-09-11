@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css?v=2">
 </head>
 <body>
   <div class="grain" aria-hidden="true"></div>
@@ -48,8 +48,9 @@
             <div class="countdown" id="countdown" aria-live="assertive"></div>
             <div class="flash" id="flash"></div>
             <div class="camera-error" id="camera-error" hidden>
-              <strong>Camera access is off.</strong>
-              <span>You can still make your strip by uploading a photo for each slot.</span>
+              <strong>Camera access is unavailable.</strong>
+              <span>Allow camera access for this site, then try again.</span>
+              <button class="secondary-button" data-action="retry-camera">Try camera again</button>
               <button class="secondary-button" data-action="upload-current">Upload this photo</button>
             </div>
           </div>

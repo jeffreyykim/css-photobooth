@@ -2,7 +2,7 @@ const TEMPLATE_SIZE = { width: 591, height: 1772 };
 const TEMPLATES = [
   { id: 'plain', name: 'Plain / classic', file: '1.png', slots: [{ x: 28, y: 233, w: 534, h: 366 }, { x: 28, y: 613, w: 534, h: 366 }, { x: 28, y: 994, w: 534, h: 366 }] },
   { id: 'bbq', name: 'Welcome Back BBQ', file: '2.png', slots: [{ x: 28, y: 233, w: 534, h: 366 }, { x: 28, y: 613, w: 534, h: 366 }, { x: 28, y: 994, w: 534, h: 366 }] },
-  { id: 'shells', name: 'Purple shells', file: '3.png', slots: [{ x: 31, y: 269, w: 529, h: 351 }, { x: 31, y: 635, w: 529, h: 351 }, { x: 31, y: 1001, w: 529, h: 351 }] }
+  { id: 'shells', name: 'Purple shells', file: '3.png', slots: [{ x: 40, y: 86, w: 512, h: 515 }, { x: 40, y: 631, w: 512, h: 515 }, { x: 40, y: 1168, w: 512, h: 515 }] }
 ];
 
 const state = { template: null, photos: [null, null, null], current: 0, stream: null, mirror: true, reviewing: false };
@@ -33,8 +33,26 @@ function setupCaptureList() { $('#capture-list').innerHTML = [1, 2, 3].map((numb
 async function startCamera() {
   if (state.photos.every(Boolean)) { await renderResult(); showScreen('result'); return; }
   showScreen('camera'); state.current = state.photos.findIndex((photo) => !photo); if (state.current < 0) state.current = 0; updateCaptureList();
-  try { state.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false }); $('#camera-video').srcObject = state.stream; $('#camera-error').hidden = true; $('#capture-button').disabled = false; $('#camera-status').textContent = 'Ready when you are'; }
-  catch (error) { $('#camera-error').hidden = false; $('#capture-button').disabled = true; $('#camera-status').textContent = error.name === 'NotAllowedError' ? 'Camera permission was denied' : 'Camera is unavailable'; }
+  stopCamera();
+  $('#camera-error').hidden = true;
+  $('#capture-button').disabled = true;
+  $('#camera-status').textContent = 'Requesting camera access...';
+  try {
+    if (!navigator.mediaDevices?.getUserMedia) throw new DOMException('Camera access requires a secure context.', 'SecurityError');
+    state.stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 1280 }, height: { ideal: 960 } }, audio: false });
+    $('#camera-video').srcObject = state.stream;
+    $('#camera-error').hidden = true;
+    $('#capture-button').disabled = false;
+    $('#camera-status').textContent = 'Ready when you are';
+  } catch (error) {
+    const title = $('#camera-error strong');
+    const detail = $('#camera-error span');
+    title.textContent = error.name === 'NotAllowedError' ? 'Camera permission is blocked.' : error.name === 'NotFoundError' ? 'No camera was found.' : 'Camera needs localhost or HTTPS.';
+    detail.textContent = error.name === 'NotAllowedError' ? 'Allow camera access for this site, then try again.' : error.name === 'NotFoundError' ? 'Upload a photo for each slot instead.' : 'Open this booth at http://localhost, then try again.';
+    $('#camera-error').hidden = false;
+    $('#capture-button').disabled = true;
+    $('#camera-status').textContent = title.textContent;
+  }
 }
 function countdownAndCapture() { if (!state.template || !$('#camera-video').srcObject) return; const countdown = $('#countdown'); let value = 3; countdown.textContent = value; const timer = setInterval(() => { value -= 1; if (value > 0) countdown.textContent = value; else { clearInterval(timer); countdown.textContent = ''; captureFrame(); } }, 800); }
 function captureFrame() { const video = $('#camera-video'); const canvas = document.createElement('canvas'); canvas.width = video.videoWidth || 1280; canvas.height = video.videoHeight || 960; const ctx = canvas.getContext('2d'); ctx.save(); if (state.mirror) { ctx.translate(canvas.width, 0); ctx.scale(-1, 1); } ctx.drawImage(video, 0, 0, canvas.width, canvas.height); ctx.restore(); state.photos[state.current] = canvas.toDataURL('image/jpeg', .92); $('#flash').classList.remove('fire'); void $('#flash').offsetWidth; $('#flash').classList.add('fire'); advanceAfterCapture(); }
@@ -44,12 +62,12 @@ function retakeCurrentPhoto() { state.photos[state.current] = null; state.review
 function advanceAfterCapture() { showCaptureReview(); }
 function uploadPhoto(file) { if (!file) return; const reader = new FileReader(); reader.onload = () => { state.photos[state.current] = reader.result; showCaptureReview(); }; reader.readAsDataURL(file); }
 function stopCamera() { if (state.stream) { state.stream.getTracks().forEach((track) => track.stop()); state.stream = null; } $('#camera-video').srcObject = null; }
-function drawCover(ctx, image, slot) { const scale = Math.max(slot.w / image.naturalWidth, slot.h / image.naturalHeight); const width = image.naturalWidth * scale; const height = image.naturalHeight * scale; ctx.drawImage(image, slot.x + (slot.w - width) / 2, slot.y + (slot.h - height) / 2, width, height); }
+function drawCover(ctx, image, slot) { const scale = Math.max(slot.w / image.naturalWidth, slot.h / image.naturalHeight); const width = image.naturalWidth * scale; const height = image.naturalHeight * scale; ctx.save(); ctx.beginPath(); ctx.rect(slot.x, slot.y, slot.w, slot.h); ctx.clip(); ctx.drawImage(image, slot.x + (slot.w - width) / 2, slot.y + (slot.h - height) / 2, width, height); ctx.restore(); }
 async function renderResult() { const canvas = $('#result-canvas'); const ctx = canvas.getContext('2d'); ctx.clearRect(0, 0, canvas.width, canvas.height); const templateImageElement = templateImage(state.template); await new Promise((resolve) => { templateImageElement.onload = resolve; templateImageElement.onerror = () => { const fallback = new Image(); fallback.onload = () => { ctx.drawImage(fallback, 0, 0); resolve(); }; fallback.src = makeFallbackTemplate(state.template); }; }); if (templateImageElement.complete && templateImageElement.naturalWidth) ctx.drawImage(templateImageElement, 0, 0); for (let index = 0; index < state.photos.length; index += 1) { if (!state.photos[index]) continue; const photo = new Image(); await new Promise((resolve) => { photo.onload = () => { drawCover(ctx, photo, state.template.slots[index]); resolve(); }; photo.src = state.photos[index]; }); } }
 function downloadResult() { const link = document.createElement('a'); link.download = `ubc-css-photo-strip-${state.template.id}.png`; link.href = $('#result-canvas').toDataURL('image/png'); link.click(); }
 async function shareResult() { const status = $('#share-status'); if (!navigator.share) { status.textContent = 'Sharing is not supported here. Download the PNG instead.'; return; } const blob = await new Promise((resolve) => $('#result-canvas').toBlob(resolve, 'image/png')); const file = new File([blob], 'ubc-css-photo-strip.png', { type: 'image/png' }); try { await navigator.share({ title: 'My UBC CSS photo strip', files: [file] }); } catch (error) { if (error.name !== 'AbortError') status.textContent = 'Could not share this strip from your browser.'; } }
 
-document.addEventListener('click', (event) => { const action = event.target.closest('[data-action]')?.dataset.action; if (!action) return; if (action === 'start') startCamera(); if (action === 'capture') countdownAndCapture(); if (action === 'upload-current') $('#upload-input').click(); if (action === 'continue-current') continueCurrentPhoto(); if (action === 'retake-current') retakeCurrentPhoto(); if (action === 'download') downloadResult(); if (action === 'share') shareResult(); if (action === 'change-template') { stopCamera(); showScreen('landing'); updateLandingAction(); } if (action === 'retake') { state.photos = [null, null, null]; updateLandingAction(); startCamera(); } if (action === 'home') { stopCamera(); state.photos = [null, null, null]; updateLandingAction(); showScreen('landing'); } });
+document.addEventListener('click', (event) => { const action = event.target.closest('[data-action]')?.dataset.action; if (!action) return; if (action === 'start' || action === 'retry-camera') startCamera(); if (action === 'capture') countdownAndCapture(); if (action === 'upload-current') $('#upload-input').click(); if (action === 'continue-current') continueCurrentPhoto(); if (action === 'retake-current') retakeCurrentPhoto(); if (action === 'download') downloadResult(); if (action === 'share') shareResult(); if (action === 'change-template') { stopCamera(); showScreen('landing'); updateLandingAction(); } if (action === 'retake') { state.photos = [null, null, null]; updateLandingAction(); startCamera(); } if (action === 'home') { stopCamera(); state.photos = [null, null, null]; updateLandingAction(); showScreen('landing'); } });
 $('#upload-input').addEventListener('change', (event) => uploadPhoto(event.target.files[0]));
 $('#mirror-toggle').addEventListener('change', (event) => { state.mirror = event.target.checked; });
 renderTemplateCards(); setupCaptureList();
